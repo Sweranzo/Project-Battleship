@@ -1,3 +1,4 @@
 import "./style.css";
+import { display } from "./display.js";
 
-console.log("Webpack template is working!");
+display.showBoard();
