@@ -1,11 +1,13 @@
-export class Ships {
+export class Ship {
   constructor() {
-    this.carrier = Array(5).fill(5);
-    this.battleShip = Array(4).fill(4);
-    this.cruiser = Array(3).fill(3);
-    this.submarine = Array(3).fill(3);
-    this.destroyer = Array(2).fill(2);
+    this.ships = {
+      carrier: Array(5).fill("Ca"),
+      battleship: Array(4).fill("B"),
+      cruiser: Array(3).fill("Cr"),
+      submarine: Array(3).fill("S"),
+      destroyer: Array(2).fill("D"),
+    };
   }
 }
 
-export const ships = new Ships();
+export const ships = new Ship();

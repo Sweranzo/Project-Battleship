@@ -7,9 +7,26 @@
 body {
   margin: 0;
   font-family: sans-serif;
+}
+
+main {
   display: grid;
   grid-template-columns: 1fr 1fr;
   height: 100vh;
+  padding: 100px;
+}
+.ships-container {
+  position: absolute;
+  left: 50%;
+  right: 50%;
+  justify-content: center;
+  gap: 50px;
+  bottom: 5px;
+  display: flex;
+}
+
+.ships-container img {
+  max-height: 150px;
 }
 
 .player-board {
@@ -20,8 +37,6 @@ body {
   border: 2px solid black;
   height: 100%;
   border: 2px solid green;
-  flex-wrap: wrap;
-  padding: 100px;
 }
 
 .computer-board {
@@ -31,11 +46,10 @@ body {
   gap: 2px;
   height: 100%;
   border: 2px solid red;
-  flex-wrap: wrap;
-  padding: 100px;
 }
 
 .box {
   background-color: blue;
-  border: black;
+
+  border: 1px solid black;
 }
