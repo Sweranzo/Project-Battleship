@@ -17,19 +17,21 @@ export class GameBoard {
       if (row + typeOfShip.length <= 11) {
         for (let i = 0; i < typeOfShip.length; i++) {
           if (this.board[row + i][col] !== null) {
-            return;
+            return false;
           }
         }
 
         for (let i = 0; i < typeOfShip.length; i++) {
           this.board[row + i][col] = typeOfShip[i];
         }
+      } else {
+        return false;
       }
     } else if (direction === "horizontal") {
       if (col + typeOfShip.length <= 11) {
         for (let i = 0; i < typeOfShip.length; i++) {
           if (this.board[row][col + i] !== null) {
-            return;
+            return false;
           }
         }
         for (let i = 0; i < typeOfShip.length; i++) {
@@ -38,9 +40,10 @@ export class GameBoard {
       }
     } else {
       alert("please select a valid direction");
-      return;
+      return false;
     }
     console.log(this.board);
+    return true;
   }
 
   hitMarker(index, marker) {

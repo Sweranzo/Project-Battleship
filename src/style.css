@@ -8,13 +8,18 @@ body {
   margin: 0;
   font-family: sans-serif;
 }
+#container {
+  display: none;
+}
 
 main {
   display: grid;
   grid-template-columns: 1fr 1fr;
   height: 100vh;
-  padding: 100px;
+  padding: 20px;
+  gap: 20px;
 }
+
 .ships-container {
   position: absolute;
   left: 50%;
@@ -30,12 +35,17 @@ main {
 }
 
 .player-board {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(11, 1fr);
   grid-template-rows: repeat(11, 1fr);
-  gap: 2px;
+
   border: 2px solid black;
   height: 100%;
+  border: 2px solid green;
+}
+.player-board img {
+  z-index: 2;
   border: 2px solid green;
 }
 
@@ -50,6 +60,6 @@ main {
 
 .box {
   background-color: blue;
-
   border: 1px solid black;
+  overflow: hidden;
 }
