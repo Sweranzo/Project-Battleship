@@ -11,3 +11,4 @@ export class Ship {
 }
 
 export const ships = new Ship();
+console.log(ships.ships.carrier);

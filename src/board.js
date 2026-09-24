@@ -4,6 +4,7 @@ export class GameBoard {
   constructor() {
     this.board = Array.from({ length: 11 }, () => Array(11).fill(null));
     this.mark = null;
+    this.entryCount = 0;
   }
 
   getBoard() {
@@ -24,6 +25,9 @@ export class GameBoard {
         for (let i = 0; i < typeOfShip.length; i++) {
           this.board[row + i][col] = typeOfShip[i];
         }
+
+        this.entryCount++;
+        console.log(this.entryCount);
       } else {
         return false;
       }
@@ -37,6 +41,11 @@ export class GameBoard {
         for (let i = 0; i < typeOfShip.length; i++) {
           this.board[row][col + i] = typeOfShip[i];
         }
+
+        this.entryCount++;
+        console.log(this.entryCount);
+      } else {
+        return false;
       }
     } else {
       alert("please select a valid direction");
@@ -57,6 +66,9 @@ export class GameBoard {
 }
 
 export const gameBoard = new GameBoard();
+export const cBoard = new GameBoard();
+
+console.log(cBoard.board);
 
 /* const position = gameBoard.shipsPosition("battleship", 2, 5);
 console.log(position); */
