@@ -25,6 +25,35 @@ import arrowUp from "./assets/ships-img/up-chevron.png";
 import oceanAmbient from "./assets/music/dragon-studio-soothing-ocean-waves-372489.mp3";
 import heroVideos from "./assets/video/Battleship animations.mp4";
 
+function positionShipInWrapper(wrapper, image, board, row, col, length, direction) {
+  wrapper.style.position = "absolute";
+  wrapper.style.inset = "0";
+  wrapper.style.zIndex = "2";
+  wrapper.style.pointerEvents = "none";
+  wrapper.style.gridRow = direction === "vertical"
+    ? `${row + 1} / span ${length}`
+    : `${row + 1} / span 1`;
+  wrapper.style.gridColumn = direction === "horizontal"
+    ? `${col + 1} / span ${length}`
+    : `${col + 1} / span 1`;
+
+  const cell = board.querySelector(`.box[data-row="${row}"][data-col="${col}"]`);
+  if (!cell) return;
+
+  const { width: cellWidth, height: cellHeight } = cell.getBoundingClientRect();
+  image.style.position = "absolute";
+  image.style.left = "50%";
+  image.style.top = "50%";
+  image.style.transformOrigin = "center";
+  image.style.objectFit = "fill";
+  image.style.pointerEvents = board === playerBoard ? "auto" : "none";
+  image.style.width = `${direction === "horizontal" ? cellHeight : cellWidth}px`;
+  image.style.height = `${length * (direction === "horizontal" ? cellWidth : cellHeight)}px`;
+  image.style.transform = direction === "horizontal"
+    ? "translate(-50%, -50%) rotate(90deg)"
+    : "translate(-50%, -50%)";
+}
+
 class Display {
   constructor() {
     this.draggedShip = null;
@@ -248,10 +277,10 @@ class Display {
     }
 
     // 3. Remove all placed ship images from both boards
-    const playerShips = playerBoard.querySelectorAll("img");
+    const playerShips = playerBoard.querySelectorAll(".ship-placement");
     playerShips.forEach((img) => img.remove());
 
-    const computerShips = computerBoard.querySelectorAll("img");
+    const computerShips = computerBoard.querySelectorAll(".ship-placement");
     computerShips.forEach((img) => img.remove());
 
     // 4. Remove hit/miss marks or custom elements inside boxes
@@ -391,6 +420,8 @@ class Display {
                 box.style.backgroundColor = "red";
               }
             }
+            const shipWrapper = document.createElement("div");
+            shipWrapper.classList.add("ship-placement");
             const placedShip = document.createElement("img");
             const shipImages = {
               carrier: carrierImg,
@@ -405,20 +436,8 @@ class Display {
             placedShip.dataset.ship = ship;
 
             const shipLength = ships.ships[ship].length;
-
-            if (direction === "vertical") {
-              placedShip.style.gridRow = `${row + 1} / span ${shipLength}`;
-              placedShip.style.position = "absolute";
-              placedShip.style.gridColumn = `${col + 1}`;
-              placedShip.style.height = "100%";
-            } else {
-              placedShip.style.gridRow = `${row + 1}`;
-              placedShip.style.position = "absolute";
-              placedShip.style.gridColumn = `${col + 1} / span ${shipLength}`;
-              placedShip.style.transform = "rotate(90deg) translateY(-100%)";
-              placedShip.style.transformOrigin = "top left";
-              placedShip.style.translate = "-1px 0";
-            }
+            positionShipInWrapper(shipWrapper, placedShip, playerBoard, row, col, shipLength, direction);
+            shipWrapper.append(placedShip);
 
             placedShip.addEventListener("click", () => {
               const shipLength = ships.ships[ship].length;
@@ -464,21 +483,7 @@ class Display {
               col = newCol;
 
               // 4. Re-apply styles/transforms
-              if (direction === "horizontal") {
-                placedShip.style.gridRow = `${row + 1}`;
-                placedShip.style.gridColumn = `${col + 1} / span ${shipLength}`;
-                placedShip.style.transform = "rotate(90deg) translateY(-100%)";
-                placedShip.style.transformOrigin = "top left";
-                placedShip.style.translate = "-1px 0";
-                placedShip.style.height = "";
-              } else {
-                placedShip.style.gridRow = `${row + 1} / span ${shipLength}`;
-                placedShip.style.gridColumn = `${col + 1}`;
-                placedShip.style.transform = "rotate(0deg)";
-                placedShip.style.transformOrigin = "";
-                placedShip.style.translate = "";
-                placedShip.style.height = "100%";
-              }
+              positionShipInWrapper(shipWrapper, placedShip, playerBoard, row, col, shipLength, direction);
 
               // 5. Update board highlighting
               const boxes = playerBoard.querySelectorAll(".box");
@@ -497,11 +502,11 @@ class Display {
               this.oldShipDirection = direction;
               this.draggedShip = ship;
               this.draggedDirection = direction;
-              this.draggedShipElement = placedShip;
+              this.draggedShipElement = shipWrapper;
               this.isRelocating = true;
             });
             console.log(playerBoard.children.length);
-            playerBoard.append(placedShip);
+            playerBoard.append(shipWrapper);
           }
         });
 
@@ -548,6 +553,8 @@ class Display {
               box.style.backgroundColor = "red";
             }
           }
+          const shipWrapper = document.createElement("div");
+          shipWrapper.classList.add("ship-placement");
           const placedImage = document.createElement("img");
           const shipImages = {
             carrier: carrierImg,
@@ -560,22 +567,10 @@ class Display {
           placedImage.src = shipImages[ship];
 
           const shipLength = ships.ships[ship].length;
+          positionShipInWrapper(shipWrapper, placedImage, computerBoard, randomRow, randomCol, shipLength, cdirection);
+          shipWrapper.append(placedImage);
 
-          if (cdirection === "vertical") {
-            placedImage.style.gridRow = `${randomRow + 1} / span ${shipLength}`;
-            placedImage.style.position = "absolute";
-            placedImage.style.gridColumn = `${randomCol + 1}`;
-            placedImage.style.height = "100%";
-          } else {
-            placedImage.style.gridRow = `${randomRow + 1}`;
-            placedImage.style.position = "absolute";
-            placedImage.style.gridColumn = `${randomCol + 1} / span ${shipLength}`;
-            placedImage.style.transform = "rotate(90deg) translateY(-100%)";
-            placedImage.style.transformOrigin = "top left";
-            placedImage.style.translate = "-1px 0";
-          }
-
-          computerBoard.append(placedImage);
+          computerBoard.append(shipWrapper);
         }
       }
     }

@@ -220,7 +220,7 @@ main h1 {
 
 .mark {
   position: absolute;
-  z-index: 9999999;
+  z-index: 3;
   left: 44%;
   top: 42%;
 }
@@ -236,8 +236,9 @@ main h1 {
   border: 2px solid green;
 }
 .player-board img {
-  z-index: 2;
-
+  z-index: 0;
+  object-position: right;
+  pointer-events: none;
   border: 2px solid green;
 }
 
