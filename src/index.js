@@ -3,7 +3,7 @@ import { display } from "./display.js";
 import { play } from "./game.js";
 import { playButton, welcomeContainer, mainContainer, shipsContainer } from "./dom.js";
 
-display.render();
+display.loadingScreen();
 
 playButton.addEventListener("click", () => {
   console.log("play now clicked!");

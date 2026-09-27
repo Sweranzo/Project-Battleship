@@ -34,6 +34,7 @@ body {
   -webkit-box-shadow: inset 1px 1px 33px 23px #000000;
   box-shadow: inset 1px 1px 33px 23px #000000;
   cursor: none;
+  filter: blur(20px);
 }
 
 .target-line,
@@ -165,24 +166,56 @@ body {
 
 main {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 5fr;
   height: 100vh;
-  padding: 20px;
-  gap: 20px;
+  background-image: url(./assets/ships-img/sea.jpg);
+  background-position: center;
+  background-size: cover;
+}
+main h1 {
+  text-align: center;
+}
+
+.board-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 10px 20px 50px 20px;
+  gap: 10px;
 }
 
 .ships-container {
   position: absolute;
+  max-height: 500px;
+  bottom: 0px;
   left: 50%;
-  right: 50%;
+  transform: translate(-50%);
   justify-content: center;
   gap: 50px;
   bottom: 5px;
   display: none;
+  width: 500px;
+  padding: 20px;
+  background-color: transparent;
+  backdrop-filter: blur(10px);
+  z-index: 9999999;
+  transition: max-height 0.4s ease;
+  border-radius: 20px;
+  border: 1px solid white;
+}
+
+.ships-container.hidden {
+  max-height: 0;
 }
 
 .ships-container img {
   max-height: 150px;
+}
+
+.up-image {
+  position: absolute;
+  top: -30px;
+  height: 50px;
+  width: 50px;
 }
 
 .mark {
@@ -204,6 +237,7 @@ main {
 }
 .player-board img {
   z-index: 2;
+
   border: 2px solid green;
 }
 
@@ -211,14 +245,31 @@ main {
   display: grid;
   grid-template-columns: repeat(11, 1fr);
   grid-template-rows: repeat(11, 1fr);
-  gap: 2px;
   height: 100%;
   border: 2px solid red;
 }
 
 .box {
   position: relative;
-  background-color: blue;
-  border: 1px solid black;
+  border: 1px solid white;
   overflow: hidden;
+  backdrop-filter: blur(10px);
+}
+
+.loading-screen {
+  position: absolute;
+  border: 2px solid red;
+  display: flex;
+  z-index: 999999;
+  background-color: white;
+  border: 3px solid rgb(57, 184, 230);
+  pointer-events: none;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  height: 15%;
+  width: 20%;
+  justify-content: center;
+  align-items: center;
+  color: green;
 }

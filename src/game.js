@@ -19,7 +19,7 @@ class GameController {
   checkPlayerWin() {
     if (this.playerWinChecker >= 17) {
       alert("Player Win, Computer Lose");
-      this.currentTurn = null;
+      this.currentTurn = "computer";
       return true;
     }
 
@@ -73,6 +73,7 @@ class GameController {
     this.computerWinChecker++;
 
     if (this.checkComputerWin()) {
+      display.resetBoard();
       return;
     }
 
@@ -130,7 +131,7 @@ class GameController {
     this.computerWinChecker++;
 
     if (this.checkComputerWin()) {
-      return;
+      display.resetBoard();
     }
 
     // Computer continues
@@ -173,6 +174,7 @@ class GameController {
         this.playerWinChecker++;
 
         if (this.checkPlayerWin()) {
+          display.resetBoard();
           return;
         }
 

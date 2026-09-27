@@ -4,6 +4,7 @@ import {
   playerBoard,
   computerBoard,
   shipsContainer,
+  loadingScreen,
   mainContainer,
   midHero,
   welcomeContainer,
@@ -20,6 +21,7 @@ import submarineImg from "./assets/ships-img/ShipSubMarineHull.png";
 import destroyerImg from "./assets/ships-img/ShipDestroyerHull.png";
 import targetCursor from "./assets/ships-img/target.png";
 import welcomeBackground from "./assets/ships-img/sea.jpg";
+import arrowUp from "./assets/ships-img/up-chevron.png";
 import oceanAmbient from "./assets/music/dragon-studio-soothing-ocean-waves-372489.mp3";
 import heroVideos from "./assets/video/Battleship animations.mp4";
 
@@ -36,7 +38,56 @@ class Display {
     this.draggedShipElement = null;
   }
 
-  render() {
+  loadElement(element) {
+    if (element instanceof HTMLImageElement) {
+      return new Promise((resolve, reject) => {
+        element.onload = () => {
+          resolve();
+        };
+
+        element.onerror = () => {
+          reject(new Error("Image failed to load"));
+        };
+      });
+    } else if (element instanceof HTMLVideoElement) {
+      return new Promise((resolve, reject) => {
+        element.oncanplay = () => {
+          resolve();
+        };
+        element.onerror = () => {
+          reject(new Error("Video Failed to load"));
+        };
+      });
+    } else if (element instanceof HTMLAudioElement) {
+      return new Promise((resolve, reject) => {
+        element.oncanplay = () => {
+          resolve();
+        };
+        element.onerror = () => {
+          reject(new Error("Audio Faile to load"));
+        };
+      });
+    }
+  }
+
+  async loadingScreen() {
+    try {
+      await this.render();
+      loadingScreen.textContent = "All Display Resources Successfully loaded!";
+      await new Promise((resolve, reject) => {
+        setTimeout(() => {
+          resolve();
+        }, 2000);
+      });
+
+      loadingScreen.remove();
+      welcomeContainer.style.filter = "none";
+    } catch (error) {
+      loadingScreen.textContent = error.message;
+    }
+  }
+
+  async render() {
     // hero ship vid//
     const heroVideo = document.createElement("video");
     heroVideo.src = heroVideos;
@@ -45,13 +96,34 @@ class Display {
     heroVideo.loop = true;
     heroVideo.classList.add("hero-vid");
     midHero.append(heroVideo);
+    midHero.style.display = "flex";
+    loadingScreen.textContent = "Loading resources....";
 
+    await this.loadElement(heroVideo);
+    await new Promise((resolve, reject) => {
+      setTimeout(() => {
+        resolve();
+      }, 1000);
+    });
+    await new Promise((resolve, reject) => {
+      setTimeout(() => {
+        resolve();
+      }, 1000);
+    });
+    loadingScreen.textContent = "loading video";
     // sea background //
-
     const seaBackground = document.createElement("img");
     seaBackground.src = welcomeBackground;
     seaBackground.classList.add("sea-background");
     welcomeContainer.append(seaBackground);
+
+    await this.loadElement(seaBackground);
+    await new Promise((resolve, reject) => {
+      setTimeout(() => {
+        resolve();
+      }, 1000);
+    });
+    loadingScreen.textContent = "loading background image";
 
     // ocean music //
 
@@ -60,6 +132,13 @@ class Display {
     oceanMusic.autoplay = true;
     oceanMusic.loop = true;
     welcomeContainer.append(oceanMusic);
+    await this.loadElement(oceanMusic);
+    await new Promise((resolve, reject) => {
+      setTimeout(() => {
+        resolve();
+      }, 1000);
+    });
+    loadingScreen.textContent = "loading audio";
 
     // target cursor //
 
@@ -67,6 +146,7 @@ class Display {
     target.src = targetCursor;
     target.classList.add("target-cursor");
     welcomeContainer.append(target);
+    console.log(targetLine);
     const targetRect = targetLine.getBoundingClientRect();
     const target1Rect = targetLine1.getBoundingClientRect();
     const target3Rect = targetLine3.getBoundingClientRect();
@@ -74,6 +154,7 @@ class Display {
     console.log(targetLine3.offsetParent);
 
     welcomeContainer.addEventListener("mousemove", (event) => {
+      console.log(`${event.clientY},${event.clientX}`);
       target.style.left = `${event.clientX}px`;
       target.style.top = `${event.clientY}px`;
 
@@ -144,6 +225,53 @@ class Display {
     });
   }
 
+  resetBoard() {
+    // 1. Reset state tracking properties
+    this.draggedShip = null;
+    this.draggedDirection = null;
+    this.highlightedBox = [];
+    this.setOfShips = [];
+    this.oldShipRow = null;
+    this.oldShipCol = null;
+    this.oldShipDirection = null;
+    this.isRelocating = false;
+    this.draggedShipElement = null;
+
+    // 2. Clear backend game board arrays
+    for (let r = 0; r < gameBoard.board.length; r++) {
+      for (let c = 0; c < gameBoard.board[r].length; c++) {
+        gameBoard.board[r][c] = null;
+        if (cBoard && cBoard.board) {
+          cBoard.board[r][c] = null;
+        }
+      }
+    }
+
+    // 3. Remove all placed ship images from both boards
+    const playerShips = playerBoard.querySelectorAll("img");
+    playerShips.forEach((img) => img.remove());
+
+    const computerShips = computerBoard.querySelectorAll("img");
+    computerShips.forEach((img) => img.remove());
+
+    // 4. Remove hit/miss marks or custom elements inside boxes
+    const allBoxes = document.querySelectorAll(".box");
+    allBoxes.forEach((box) => {
+      box.style.backgroundColor = "";
+      box.textContent = ""; // Clears text marks like 'X' or 'O'
+      box.className = "box"; // Resets extra classes (e.g., .hit, .miss)
+
+      // Remove mark elements or SVGs added inside boxes
+      const marks = box.querySelectorAll(".mark, svg, span");
+      marks.forEach((mark) => mark.remove());
+    });
+
+    // 5. Repopulate the sidebar ship selection container
+
+    shipsContainer.innerHTML = "";
+    this.displayShips();
+    this.generateComputerShips();
+  }
   showBoard() {
     for (let row = 0; row < gameBoard.board.length; row++) {
       for (let col = 0; col < gameBoard.board[row].length; col++) {
@@ -296,21 +424,22 @@ class Display {
               const shipLength = ships.ships[ship].length;
               const offSet = Math.floor(shipLength / 2);
 
-              let newDirection;
-              let newRow;
-              let newCol;
+              let newDirection = direction === "vertical" ? "horizontal" : "vertical";
+              let newRow = direction === "vertical" ? row + offSet : row - offSet;
+              let newCol = direction === "vertical" ? col - offSet : col + offSet;
 
-              if (direction === "vertical") {
-                newDirection = "horizontal";
-                newRow = row + offSet;
-                newCol = col - offSet;
-              } else {
-                newDirection = "vertical";
-                newRow = row - offSet;
-                newCol = col + offSet;
+              // Pre-validate boundaries before touching the board array
+              if (
+                newRow < 0 ||
+                newCol < 0 ||
+                (newDirection === "vertical" && newRow + shipLength > 11) ||
+                (newDirection === "horizontal" && newCol + shipLength > 11)
+              ) {
+                alert("Cannot rotate ship here - out of bounds!");
+                return;
               }
 
-              // 1. Temporarily clear old placement from board array to avoid self-collision
+              // 1. Clear old placement from array temporarily
               for (let i = 0; i < shipLength; i++) {
                 if (direction === "vertical") {
                   gameBoard.board[row + i][col] = null;
@@ -319,22 +448,22 @@ class Display {
                 }
               }
 
-              // 2. Validate new position with the NEW direction
+              // 2. Validate position on board
               const newPlacement = gameBoard.shipsPosition(ship, newRow, newCol, newDirection);
 
               if (!newPlacement) {
-                // Revert board array back to original position if rotation fails
+                // Restore original position if rotation collides with another ship
                 gameBoard.shipsPosition(ship, row, col, direction);
-                alert("Cannot rotate ship here!");
+                alert("Cannot rotate ship here - blocked by another ship!");
                 return;
               }
 
-              // 3. Update local state variables for future clicks / drags
+              // 3. Update current ship placement variables
               direction = newDirection;
               row = newRow;
               col = newCol;
 
-              // 4. Update element positioning and transforms
+              // 4. Re-apply styles/transforms
               if (direction === "horizontal") {
                 placedShip.style.gridRow = `${row + 1}`;
                 placedShip.style.gridColumn = `${col + 1} / span ${shipLength}`;
@@ -351,7 +480,7 @@ class Display {
                 placedShip.style.height = "100%";
               }
 
-              // 5. Update board cell background highlighting
+              // 5. Update board highlighting
               const boxes = playerBoard.querySelectorAll(".box");
               for (const box of boxes) {
                 const bRow = Number(box.dataset.row);
@@ -359,6 +488,7 @@ class Display {
                 box.style.backgroundColor = gameBoard.board[bRow][bCol] !== null ? "red" : "";
               }
             });
+
             placedShip.addEventListener("dragstart", (e) => {
               e.dataTransfer.setData("ship", ship);
               e.dataTransfer.setData("direction", direction);
@@ -379,8 +509,21 @@ class Display {
         playerBoard.append(playerBox);
       }
     }
+    this.generateComputerShips();
+  }
 
-    //computer move generation //
+  generateComputerShips() {
+    const computerShips = computerBoard.querySelectorAll("img");
+    computerShips.forEach((img) => img.remove());
+
+    if (cBoard && cBoard.board) {
+      for (let r = 0; r < cBoard.board.length; r++) {
+        for (let c = 0; c < cBoard.board[r].length; c++) {
+          cBoard.board[r][c] = null;
+        }
+      }
+    }
+
     const randomShip = ["cruiser", "battleship", "carrier", "submarine", "destroyer"];
 
     for (const ship of randomShip) {
@@ -430,17 +573,20 @@ class Display {
             placedImage.style.transform = "rotate(90deg) translateY(-100%)";
             placedImage.style.transformOrigin = "top left";
             placedImage.style.translate = "-1px 0";
-            /*  placedShip.style.width = `${shipLength * 100}%`; */
           }
 
           computerBoard.append(placedImage);
         }
       }
-
-      console.log(ship, randomRow, randomCol, cdirection);
     }
   }
   displayShips() {
+    const arrowImage = document.createElement("img");
+    arrowImage.classList.add("up-image");
+    arrowImage.src = arrowUp;
+    arrowImage.addEventListener("click", () => {
+      shipsContainer.classList.toggle("hidden");
+    });
     const carrier = document.createElement("img");
     carrier.src = carrierImg;
     const battleship = document.createElement("img");
@@ -487,7 +633,7 @@ class Display {
       });
     }
 
-    shipsContainer.append(carrier, battleship, cruiser, submarine, destroyer);
+    shipsContainer.append(arrowImage, carrier, battleship, cruiser, submarine, destroyer);
   }
 }
 
