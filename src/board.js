@@ -3,7 +3,6 @@ import { ships } from "./ship.js";
 export class GameBoard {
   constructor() {
     this.board = Array.from({ length: 11 }, () => Array(11).fill(null));
-    this.mark = null;
     this.entryCount = 0;
   }
 
@@ -66,20 +65,11 @@ export class GameBoard {
       return false;
     }
   }
-
-  hitMarker(index, marker) {
-    if (this.board[index] !== "") {
-      return false;
-    }
-
-    this.board[index] = marker;
-    return true;
-  }
 }
 
 export const gameBoard = new GameBoard();
 export const cBoard = new GameBoard();
-
+console.log(gameBoard.board);
 console.log(cBoard.board);
 
 /* const position = gameBoard.shipsPosition("battleship", 2, 5);

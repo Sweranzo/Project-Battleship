@@ -30,12 +30,10 @@ function positionShipInWrapper(wrapper, image, board, row, col, length, directio
   wrapper.style.inset = "0";
   wrapper.style.zIndex = "2";
   wrapper.style.pointerEvents = "none";
-  wrapper.style.gridRow = direction === "vertical"
-    ? `${row + 1} / span ${length}`
-    : `${row + 1} / span 1`;
-  wrapper.style.gridColumn = direction === "horizontal"
-    ? `${col + 1} / span ${length}`
-    : `${col + 1} / span 1`;
+  wrapper.style.gridRow =
+    direction === "vertical" ? `${row + 1} / span ${length}` : `${row + 1} / span 1`;
+  wrapper.style.gridColumn =
+    direction === "horizontal" ? `${col + 1} / span ${length}` : `${col + 1} / span 1`;
 
   const cell = board.querySelector(`.box[data-row="${row}"][data-col="${col}"]`);
   if (!cell) return;
@@ -49,9 +47,8 @@ function positionShipInWrapper(wrapper, image, board, row, col, length, directio
   image.style.pointerEvents = board === playerBoard ? "auto" : "none";
   image.style.width = `${direction === "horizontal" ? cellHeight : cellWidth}px`;
   image.style.height = `${length * (direction === "horizontal" ? cellWidth : cellHeight)}px`;
-  image.style.transform = direction === "horizontal"
-    ? "translate(-50%, -50%) rotate(90deg)"
-    : "translate(-50%, -50%)";
+  image.style.transform =
+    direction === "horizontal" ? "translate(-50%, -50%) rotate(90deg)" : "translate(-50%, -50%)";
 }
 
 class Display {
@@ -59,6 +56,7 @@ class Display {
     this.draggedShip = null;
     this.draggedDirection = null;
     this.highlightedBox = [];
+    this.shipIsSunk = null;
     this.setOfShips = [];
     this.oldShipRow = null;
     this.oldShipCol = null;
@@ -93,7 +91,7 @@ class Display {
           resolve();
         };
         element.onerror = () => {
-          reject(new Error("Audio Faile to load"));
+          reject(new Error("Audio Failed to load"));
         };
       });
     }
@@ -304,7 +302,6 @@ class Display {
   showBoard() {
     for (let row = 0; row < gameBoard.board.length; row++) {
       for (let col = 0; col < gameBoard.board[row].length; col++) {
-        console.log(`this is col ${col}`);
         const playerBox = document.createElement("div");
         playerBox.classList.add("box");
 
@@ -350,7 +347,6 @@ class Display {
 
             if (box) {
               box.style.backgroundColor = "red";
-
               this.highlightedBox.push(box);
             }
           }
@@ -417,7 +413,7 @@ class Display {
               const boxRow = Number(box.dataset.row);
               const boxCol = Number(box.dataset.col);
               if (gameBoard.board[boxRow][boxCol] !== null) {
-                box.style.backgroundColor = "red";
+                box.style.backgroundColor = "transparent";
               }
             }
             const shipWrapper = document.createElement("div");
@@ -436,7 +432,15 @@ class Display {
             placedShip.dataset.ship = ship;
 
             const shipLength = ships.ships[ship].length;
-            positionShipInWrapper(shipWrapper, placedShip, playerBoard, row, col, shipLength, direction);
+            positionShipInWrapper(
+              shipWrapper,
+              placedShip,
+              playerBoard,
+              row,
+              col,
+              shipLength,
+              direction
+            );
             shipWrapper.append(placedShip);
 
             placedShip.addEventListener("click", () => {
@@ -483,14 +487,23 @@ class Display {
               col = newCol;
 
               // 4. Re-apply styles/transforms
-              positionShipInWrapper(shipWrapper, placedShip, playerBoard, row, col, shipLength, direction);
+              positionShipInWrapper(
+                shipWrapper,
+                placedShip,
+                playerBoard,
+                row,
+                col,
+                shipLength,
+                direction
+              );
 
               // 5. Update board highlighting
               const boxes = playerBoard.querySelectorAll(".box");
               for (const box of boxes) {
                 const bRow = Number(box.dataset.row);
                 const bCol = Number(box.dataset.col);
-                box.style.backgroundColor = gameBoard.board[bRow][bCol] !== null ? "red" : "";
+                box.style.backgroundColor =
+                  gameBoard.board[bRow][bCol] !== null ? "transparent" : "";
               }
             });
 
@@ -518,8 +531,8 @@ class Display {
   }
 
   generateComputerShips() {
-    const computerShips = computerBoard.querySelectorAll("img");
-    computerShips.forEach((img) => img.remove());
+    const computerShips = computerBoard.querySelectorAll(".ship-placement");
+    computerShips.forEach((shipWrapper) => shipWrapper.remove());
 
     if (cBoard && cBoard.board) {
       for (let r = 0; r < cBoard.board.length; r++) {
@@ -545,16 +558,9 @@ class Display {
 
         placeComputerShip = cBoard.shipsPosition(ship, randomRow, randomCol, cdirection);
         if (placeComputerShip) {
-          const boxes = computerBoard.querySelectorAll(".box");
-          for (const box of boxes) {
-            const row = Number(box.dataset.row);
-            const col = Number(box.dataset.col);
-            if (cBoard.board[row][col] !== null) {
-              box.style.backgroundColor = "red";
-            }
-          }
           const shipWrapper = document.createElement("div");
-          shipWrapper.classList.add("ship-placement");
+          shipWrapper.classList.add("ship-placement", "computer-ship");
+          shipWrapper.dataset.ship = ship;
           const placedImage = document.createElement("img");
           const shipImages = {
             carrier: carrierImg,
@@ -567,9 +573,16 @@ class Display {
           placedImage.src = shipImages[ship];
 
           const shipLength = ships.ships[ship].length;
-          positionShipInWrapper(shipWrapper, placedImage, computerBoard, randomRow, randomCol, shipLength, cdirection);
+          positionShipInWrapper(
+            shipWrapper,
+            placedImage,
+            computerBoard,
+            randomRow,
+            randomCol,
+            shipLength,
+            cdirection
+          );
           shipWrapper.append(placedImage);
-
           computerBoard.append(shipWrapper);
         }
       }

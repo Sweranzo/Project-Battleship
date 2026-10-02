@@ -9,11 +9,38 @@ class GameController {
     this.computerWinChecker = 0;
   }
 
+  checkIfShipIsSunk(ship) {
+    let foundShip = false;
+
+    for (let row = 0; row < cBoard.board.length; row++) {
+      for (let col = 0; col < cBoard.board[row].length; col++) {
+        if (cBoard.board[row][col] === ship) {
+          foundShip = true;
+
+          const box = computerBoard.querySelector(`.box[data-row="${row}"][data-col="${col}"]`);
+
+          if (!box?.querySelector(".check-mark")) {
+            return false;
+          }
+        }
+      }
+    }
+
+    return foundShip;
+  }
+
   createMark() {
     const mark = document.createElement("p");
     mark.classList.add("mark");
     mark.textContent = "X";
     return mark;
+  }
+
+  checkHitShip() {
+    const checkMark = document.createElement("p");
+    checkMark.classList.add("check-mark");
+    checkMark.textContent = "✓";
+    return checkMark;
   }
 
   checkPlayerWin() {
@@ -159,19 +186,28 @@ class GameController {
 
         const row = Number(box.dataset.row);
         const col = Number(box.dataset.col);
-
+        const shipName = cBoard.board[row][col];
         box.dataset.selected = "true";
-        box.append(this.createMark());
 
         // MISS
-        if (cBoard.board[row][col] === null) {
+        if (shipName === null) {
           this.currentTurn = "computer";
+          box.append(this.createMark());
           this.computerMove();
           return;
         }
 
         // HIT
+
+        box.append(this.checkHitShip());
         this.playerWinChecker++;
+
+        if (this.checkIfShipIsSunk(shipName)) {
+          const sunkShip = computerBoard.querySelector(
+            `.computer-ship[data-ship="${shipName}"]`
+          );
+          sunkShip?.classList.add("revealed");
+        }
 
         if (this.checkPlayerWin()) {
           display.resetBoard();

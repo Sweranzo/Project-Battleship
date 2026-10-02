@@ -218,7 +218,8 @@ main h1 {
   width: 50px;
 }
 
-.mark {
+.mark,
+.check-mark {
   position: absolute;
   z-index: 3;
   left: 44%;
@@ -250,13 +251,24 @@ main h1 {
   border: 2px solid red;
 }
 
+.computer-ship {
+  visibility: hidden;
+}
+
+.computer-ship.revealed {
+  visibility: visible;
+}
+
 .box {
   position: relative;
   border: 1px solid white;
   overflow: hidden;
   backdrop-filter: blur(10px);
 }
-
+/* .box:has(.mark) {
+  z-index: 3;
+  backdrop-filter: none;
+} */
 .loading-screen {
   position: absolute;
   border: 2px solid red;
