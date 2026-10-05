@@ -12,3 +12,5 @@ export const targetLine1 = document.querySelector(".target-line-1");
 export const targetLine2 = document.querySelector(".target-line-2");
 export const targetLine3 = document.querySelector(".target-line-3");
 export const loadingScreen = document.querySelector(".loading-screen");
+export const loadingOrbit = document.querySelector(".loading-orbit");
+export const progressBar = document.querySelector(".progress-bar");

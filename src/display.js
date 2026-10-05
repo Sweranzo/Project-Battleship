@@ -13,6 +13,8 @@ import {
   targetLine2,
   targetLine3,
   playButton,
+  loadingOrbit,
+  progressBar,
 } from "./dom.js";
 import battleshipImg from "./assets/ships-img/ShipBattleshipHull.png";
 import carrierImg from "./assets/ships-img/ShipCarrierHull.png";
@@ -24,32 +26,8 @@ import welcomeBackground from "./assets/ships-img/sea.jpg";
 import arrowUp from "./assets/ships-img/up-chevron.png";
 import oceanAmbient from "./assets/music/dragon-studio-soothing-ocean-waves-372489.mp3";
 import heroVideos from "./assets/video/Battleship animations.mp4";
-
-function positionShipInWrapper(wrapper, image, board, row, col, length, direction) {
-  wrapper.style.position = "absolute";
-  wrapper.style.inset = "0";
-  wrapper.style.zIndex = "2";
-  wrapper.style.pointerEvents = "none";
-  wrapper.style.gridRow =
-    direction === "vertical" ? `${row + 1} / span ${length}` : `${row + 1} / span 1`;
-  wrapper.style.gridColumn =
-    direction === "horizontal" ? `${col + 1} / span ${length}` : `${col + 1} / span 1`;
-
-  const cell = board.querySelector(`.box[data-row="${row}"][data-col="${col}"]`);
-  if (!cell) return;
-
-  const { width: cellWidth, height: cellHeight } = cell.getBoundingClientRect();
-  image.style.position = "absolute";
-  image.style.left = "50%";
-  image.style.top = "50%";
-  image.style.transformOrigin = "center";
-  image.style.objectFit = "fill";
-  image.style.pointerEvents = board === playerBoard ? "auto" : "none";
-  image.style.width = `${direction === "horizontal" ? cellHeight : cellWidth}px`;
-  image.style.height = `${length * (direction === "horizontal" ? cellWidth : cellHeight)}px`;
-  image.style.transform =
-    direction === "horizontal" ? "translate(-50%, -50%) rotate(90deg)" : "translate(-50%, -50%)";
-}
+import batlleshipGif from "./assets/ships-img/node-navy.gif";
+import newShipBackground from "./assets/ships-img/newship.png";
 
 class Display {
   constructor() {
@@ -65,123 +43,133 @@ class Display {
     this.draggedShipElement = null;
   }
 
-  loadElement(element) {
-    if (element instanceof HTMLImageElement) {
-      return new Promise((resolve, reject) => {
-        element.onload = () => {
-          resolve();
-        };
+  //ships resizer
 
-        element.onerror = () => {
-          reject(new Error("Image failed to load"));
-        };
-      });
-    } else if (element instanceof HTMLVideoElement) {
-      return new Promise((resolve, reject) => {
-        element.oncanplay = () => {
-          resolve();
-        };
-        element.onerror = () => {
-          reject(new Error("Video Failed to load"));
-        };
-      });
-    } else if (element instanceof HTMLAudioElement) {
-      return new Promise((resolve, reject) => {
-        element.oncanplay = () => {
-          resolve();
-        };
-        element.onerror = () => {
-          reject(new Error("Audio Failed to load"));
-        };
-      });
-    }
+  positionShipInWrapper(wrapper, image, board, row, col, length, direction) {
+    wrapper.style.position = "absolute";
+    wrapper.style.inset = "0";
+    wrapper.style.zIndex = "2";
+    wrapper.style.pointerEvents = "none";
+    wrapper.style.gridRow =
+      direction === "vertical" ? `${row + 1} / span ${length}` : `${row + 1} / span 1`;
+    wrapper.style.gridColumn =
+      direction === "horizontal" ? `${col + 1} / span ${length}` : `${col + 1} / span 1`;
+
+    const cell = board.querySelector(`.box[data-row="${row}"][data-col="${col}"]`);
+    if (!cell) return;
+
+    const { width: cellWidth, height: cellHeight } = cell.getBoundingClientRect();
+    image.style.position = "absolute";
+    image.style.left = "50%";
+    image.style.top = "50%";
+    image.style.transformOrigin = "center";
+    image.style.objectFit = "fill";
+    image.style.pointerEvents = board === playerBoard ? "auto" : "none";
+    image.style.width = `${direction === "horizontal" ? cellHeight : cellWidth}px`;
+    image.style.height = `${length * (direction === "horizontal" ? cellWidth : cellHeight)}px`;
+    image.style.transform =
+      direction === "horizontal" ? "translate(-50%, -50%) rotate(90deg)" : "translate(-50%, -50%)";
   }
+
+  //element loader
+
+  loadElement(element) {
+    return new Promise((resolve, reject) => {
+      if (element instanceof HTMLImageElement) {
+        // If already loaded/cached
+        if (element.complete) {
+          return resolve();
+        }
+        element.onload = () => resolve();
+        element.onerror = () => reject(new Error(`Failed to load image: ${element.src}`));
+      } else if (element instanceof HTMLVideoElement || element instanceof HTMLAudioElement) {
+        // readyState >= 3 means HAVE_FUTURE_DATA (can play)
+        if (element.readyState >= 3) {
+          return resolve();
+        }
+        element.oncanplay = () => resolve();
+        element.onerror = () => reject(new Error(`Failed to load media: ${element.src}`));
+      } else {
+        resolve();
+      }
+    });
+  }
+
+  loadingBar() {}
+
+  //loading screen async
 
   async loadingScreen() {
+    const loadingPara = document.createElement("p");
+    loadingScreen.append(loadingPara);
+
+    const imageGif = document.createElement("img");
+    imageGif.src = batlleshipGif;
+    imageGif.classList.add("gif");
+    loadingOrbit.append(imageGif);
+
     try {
+      welcomeContainer.style.opacity = "0";
+      loadingPara.textContent = "Initializing Game...";
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // Now correctly awaits all render media loading
       await this.render();
-      loadingScreen.textContent = "All Display Resources Successfully loaded!";
-      await new Promise((resolve, reject) => {
-        setTimeout(() => {
-          resolve();
-        }, 2000);
-      });
+
+      progressBar.style.width = "100%";
+      loadingPara.textContent = "Succeed";
+
+      // Wait 2 seconds before removing loading screen
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       loadingScreen.remove();
-      welcomeContainer.style.filter = "none";
+      const newShipDesign = document.querySelector(".newship");
+      newShipDesign.classList.add("show");
+      midHero.classList.add("show-hero");
+
+      welcomeContainer.style.opacity = "1";
+      document.body.style.backdropFilter = "none";
     } catch (error) {
-      loadingScreen.textContent = error.message;
+      loadingPara.textContent = error.message;
     }
   }
+  //resource render
 
   async render() {
-    // hero ship vid//
-    const heroVideo = document.createElement("video");
-    heroVideo.src = heroVideos;
-    heroVideo.autoplay = true;
-    heroVideo.muted = true;
-    heroVideo.loop = true;
-    heroVideo.classList.add("hero-vid");
-    midHero.append(heroVideo);
-    midHero.style.display = "flex";
-    loadingScreen.textContent = "Loading resources....";
+    const assetsToLoad = [];
 
-    await this.loadElement(heroVideo);
-    await new Promise((resolve, reject) => {
-      setTimeout(() => {
-        resolve();
-      }, 1000);
-    });
-    await new Promise((resolve, reject) => {
-      setTimeout(() => {
-        resolve();
-      }, 1000);
-    });
-    loadingScreen.textContent = "loading video";
-    // sea background //
-    const seaBackground = document.createElement("img");
-    seaBackground.src = welcomeBackground;
-    seaBackground.classList.add("sea-background");
-    welcomeContainer.append(seaBackground);
+    const newShipDeployed = document.createElement("img");
+    newShipDeployed.classList.add("newship");
+    newShipDeployed.src = newShipBackground;
+    welcomeContainer.append(newShipDeployed);
 
-    await this.loadElement(seaBackground);
-    await new Promise((resolve, reject) => {
-      setTimeout(() => {
-        resolve();
-      }, 1000);
-    });
-    loadingScreen.textContent = "loading background image";
+    assetsToLoad.push(this.loadElement(newShipDeployed));
 
-    // ocean music //
-
+    // Ocean music
     const oceanMusic = document.createElement("audio");
     oceanMusic.src = oceanAmbient;
     oceanMusic.autoplay = true;
     oceanMusic.loop = true;
     welcomeContainer.append(oceanMusic);
-    await this.loadElement(oceanMusic);
-    await new Promise((resolve, reject) => {
-      setTimeout(() => {
-        resolve();
-      }, 1000);
-    });
-    loadingScreen.textContent = "loading audio";
+    assetsToLoad.push(this.loadElement(oceanMusic));
 
-    // target cursor //
-
+    // Target cursor asset
     const target = document.createElement("img");
     target.src = targetCursor;
     target.classList.add("target-cursor");
     welcomeContainer.append(target);
-    console.log(targetLine);
+    assetsToLoad.push(this.loadElement(target));
+
+    // Wait for all assets to finish loading before continuing
+    await Promise.all(assetsToLoad);
+
+    // Set up event listeners after assets are ready
     const targetRect = targetLine.getBoundingClientRect();
     const target1Rect = targetLine1.getBoundingClientRect();
     const target3Rect = targetLine3.getBoundingClientRect();
     const containerRect = targetLine2.getBoundingClientRect();
-    console.log(targetLine3.offsetParent);
 
     welcomeContainer.addEventListener("mousemove", (event) => {
-      console.log(`${event.clientY},${event.clientX}`);
       target.style.left = `${event.clientX}px`;
       target.style.top = `${event.clientY}px`;
 
@@ -211,7 +199,6 @@ class Display {
       // Target line 2
       const target2StartX = containerRect.left;
       const target2StartY = containerRect.top + containerRect.height / 2;
-
       const target2Dx = event.clientX - target2StartX;
       const target2Dy = event.clientY - target2StartY;
 
@@ -221,11 +208,9 @@ class Display {
       targetLine2.style.width = `${target2Distance}px`;
       targetLine2.style.transform = `rotate(${target2Angle}rad)`;
 
-      //target line 3
-
+      // Target line 3
       const target3StartX = target3Rect.left;
       const target3StartY = target3Rect.top + target3Rect.height / 2;
-
       const target3Dx = event.clientX - target3StartX;
       const target3Dy = event.clientY - target3StartY;
 
@@ -234,24 +219,19 @@ class Display {
 
       targetLine3.style.width = `${target3Distance}px`;
       targetLine3.style.transform = `rotate(${target3Angle}rad)`;
-      console.log("left:", target3Rect.left);
-      console.log("right:", target3Rect.right);
-      console.log("top:", target3Rect.top);
-      console.log("height:", target3Rect.height);
+    });
 
-      console.log(target3StartX);
+    // Moved mouseenter/mouseleave outside mousemove listener
+    playButton.addEventListener("mouseenter", () => {
+      target.style.transform = "translate(-50%, -50%) scale(2)";
+    });
 
-      // play button enlargement
-      playButton.addEventListener("mouseenter", () => {
-        target.style.transform = "translate(-50%, -50%) scale(2)";
-      });
-
-      playButton.addEventListener("mouseleave", () => {
-        target.style.transform = "translate(-50%, -50%) scale(1)";
-      });
+    playButton.addEventListener("mouseleave", () => {
+      target.style.transform = "translate(-50%, -50%) scale(1)";
     });
   }
 
+  //resetting board
   resetBoard() {
     // 1. Reset state tracking properties
     this.draggedShip = null;
@@ -432,7 +412,7 @@ class Display {
             placedShip.dataset.ship = ship;
 
             const shipLength = ships.ships[ship].length;
-            positionShipInWrapper(
+            this.positionShipInWrapper(
               shipWrapper,
               placedShip,
               playerBoard,
@@ -487,7 +467,7 @@ class Display {
               col = newCol;
 
               // 4. Re-apply styles/transforms
-              positionShipInWrapper(
+              this.positionShipInWrapper(
                 shipWrapper,
                 placedShip,
                 playerBoard,
@@ -573,7 +553,7 @@ class Display {
           placedImage.src = shipImages[ship];
 
           const shipLength = ships.ships[ship].length;
-          positionShipInWrapper(
+          this.positionShipInWrapper(
             shipWrapper,
             placedImage,
             computerBoard,
