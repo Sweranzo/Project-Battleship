@@ -14,3 +14,5 @@ export const targetLine3 = document.querySelector(".target-line-3");
 export const loadingScreen = document.querySelector(".loading-screen");
 export const loadingOrbit = document.querySelector(".loading-orbit");
 export const progressBar = document.querySelector(".progress-bar");
+export const playerOption = document.querySelector(".player-option");
+export const playerBoardSetup = document.querySelector(".player-board-setup");

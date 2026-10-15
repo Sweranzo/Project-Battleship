@@ -6,7 +6,8 @@ import { playButton, welcomeContainer, mainContainer, shipsContainer, midHero } 
 display.loadingScreen();
 
 playButton.addEventListener("click", async () => {
-  midHero.classList.toggle("remove");
+  display.gameStart();
+  /*  midHero.classList.toggle("remove");
   await new Promise((resolve, reject) => {
     setTimeout(() => {
       midHero.remove();
@@ -18,5 +19,5 @@ playButton.addEventListener("click", async () => {
   mainContainer.style.display = "grid";
   display.showBoard();
   display.displayShips();
-  play.playGame();
+  play.playGame(); */
 });

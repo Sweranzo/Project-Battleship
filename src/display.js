@@ -15,6 +15,8 @@ import {
   playButton,
   loadingOrbit,
   progressBar,
+  playerOption,
+  playerBoardSetup,
 } from "./dom.js";
 import battleshipImg from "./assets/ships-img/ShipBattleshipHull.png";
 import carrierImg from "./assets/ships-img/ShipCarrierHull.png";
@@ -28,6 +30,7 @@ import oceanAmbient from "./assets/music/dragon-studio-soothing-ocean-waves-3724
 import heroVideos from "./assets/video/Battleship animations.mp4";
 import batlleshipGif from "./assets/ships-img/node-navy.gif";
 import newShipBackground from "./assets/ships-img/newship.png";
+import { play } from "./game.js";
 
 class Display {
   constructor() {
@@ -64,7 +67,7 @@ class Display {
     image.style.top = "50%";
     image.style.transformOrigin = "center";
     image.style.objectFit = "fill";
-    image.style.pointerEvents = board === playerBoard ? "auto" : "none";
+    image.style.pointerEvents = board === playerBoardSetup ? "auto" : "none";
     image.style.width = `${direction === "horizontal" ? cellHeight : cellWidth}px`;
     image.style.height = `${length * (direction === "horizontal" ? cellWidth : cellHeight)}px`;
     image.style.transform =
@@ -144,6 +147,8 @@ class Display {
     welcomeContainer.append(newShipDeployed);
 
     assetsToLoad.push(this.loadElement(newShipDeployed));
+
+    //para
 
     // Ocean music
     const oceanMusic = document.createElement("audio");
@@ -231,6 +236,267 @@ class Display {
     });
   }
 
+  showPlayerBoard() {
+    for (let row = 0; row < gameBoard.board.length; row++) {
+      for (let col = 0; col < gameBoard.board[row].length; col++) {
+        const playerBox = document.createElement("div");
+        playerBox.classList.add("box");
+
+        const computerBox = document.createElement("div");
+        computerBox.classList.add("box");
+
+        playerBox.dataset.row = row;
+        playerBox.dataset.col = col;
+
+        computerBox.dataset.row = row;
+        computerBox.dataset.col = col;
+
+        playerBox.addEventListener("dragover", (event) => {
+          event.preventDefault();
+
+          for (const box of this.highlightedBox) {
+            box.style.backgroundColor = "";
+          }
+
+          this.highlightedBox = [];
+
+          const ship = this.draggedShip;
+          const direction = this.draggedDirection;
+
+          const row = Number(playerBox.dataset.row);
+          const col = Number(playerBox.dataset.col);
+
+          const shipLength = ships.ships[ship].length;
+
+          for (let i = 0; i < shipLength; i++) {
+            let targetRow = row;
+            let targetCol = col;
+
+            if (direction === "vertical") {
+              targetRow = row + i;
+            } else {
+              targetCol = col + i;
+            }
+
+            const box = playerBoardSetup.querySelector(
+              `.box[data-row="${targetRow}"][data-col="${targetCol}"]`
+            );
+
+            if (box) {
+              box.style.backgroundColor = "red";
+              this.highlightedBox.push(box);
+            }
+          }
+        });
+
+        playerBox.addEventListener("drop", (event) => {
+          const ship = event.dataTransfer.getData("ship");
+          let direction = event.dataTransfer.getData("direction");
+          let isRelocating = this.isRelocating;
+          const removeShip = document.querySelector(`.ships-container [data-ship="${ship}"]`);
+
+          if (!isRelocating && this.setOfShips.length >= 5) {
+            this.isRelocating = false;
+            return;
+          }
+          let row = Number(playerBox.dataset.row);
+          let col = Number(playerBox.dataset.col);
+          const shipLength = ships.ships[ship].length;
+
+          // Remove old position
+          if (isRelocating) {
+            for (let i = 0; i < shipLength; i++) {
+              if (this.oldShipDirection === "vertical") {
+                gameBoard.board[this.oldShipRow + i][this.oldShipCol] = null;
+              } else {
+                gameBoard.board[this.oldShipRow][this.oldShipCol + i] = null;
+              }
+            }
+          }
+
+          const placed = gameBoard.shipsPosition(ship, row, col, direction);
+
+          console.log(this.setOfShips);
+
+          if (!placed) {
+            // If relocation failed, restore previous position on the board grid array
+            if (isRelocating) {
+              gameBoard.shipsPosition(
+                ship,
+                this.oldShipRow,
+                this.oldShipCol,
+                this.oldShipDirection
+              );
+            }
+            this.isRelocating = false;
+            alert("Invalid placement!");
+            return;
+          }
+
+          if (isRelocating && this.draggedShipElement) {
+            this.draggedShipElement.remove();
+          } else {
+            // New ship from sidebar
+            const sidebarShip = shipsContainer.querySelector(`[data-ship="${ship}"]`);
+            if (sidebarShip) sidebarShip.remove();
+            this.setOfShips.push(placed);
+          }
+
+          this.isRelocating = false;
+
+          if (placed) {
+            const boxes = playerBoardSetup.querySelectorAll(".box");
+            for (const box of boxes) {
+              const boxRow = Number(box.dataset.row);
+              const boxCol = Number(box.dataset.col);
+              if (gameBoard.board[boxRow][boxCol] !== null) {
+                box.style.backgroundColor = "transparent";
+              }
+            }
+            const shipWrapper = document.createElement("div");
+            shipWrapper.classList.add("ship-placement");
+            const placedShip = document.createElement("img");
+            const shipImages = {
+              carrier: carrierImg,
+              battleship: battleshipImg,
+              cruiser: cruiserImg,
+              submarine: submarineImg,
+              destroyer: destroyerImg,
+            };
+
+            placedShip.src = shipImages[ship];
+            placedShip.draggable = true;
+            placedShip.dataset.ship = ship;
+
+            const shipLength = ships.ships[ship].length;
+            this.positionShipInWrapper(
+              shipWrapper,
+              placedShip,
+              playerBoardSetup,
+              row,
+              col,
+              shipLength,
+              direction
+            );
+            shipWrapper.append(placedShip);
+
+            placedShip.addEventListener("click", () => {
+              const shipLength = ships.ships[ship].length;
+              const offSet = Math.floor(shipLength / 2);
+
+              let newDirection = direction === "vertical" ? "horizontal" : "vertical";
+              let newRow = direction === "vertical" ? row + offSet : row - offSet;
+              let newCol = direction === "vertical" ? col - offSet : col + offSet;
+
+              // Pre-validate boundaries before touching the board array
+              if (
+                newRow < 0 ||
+                newCol < 0 ||
+                (newDirection === "vertical" && newRow + shipLength > 11) ||
+                (newDirection === "horizontal" && newCol + shipLength > 11)
+              ) {
+                alert("Cannot rotate ship here - out of bounds!");
+                return;
+              }
+
+              // 1. Clear old placement from array temporarily
+              for (let i = 0; i < shipLength; i++) {
+                if (direction === "vertical") {
+                  gameBoard.board[row + i][col] = null;
+                } else {
+                  gameBoard.board[row][col + i] = null;
+                }
+              }
+
+              // 2. Validate position on board
+              const newPlacement = gameBoard.shipsPosition(ship, newRow, newCol, newDirection);
+
+              if (!newPlacement) {
+                // Restore original position if rotation collides with another ship
+                gameBoard.shipsPosition(ship, row, col, direction);
+                alert("Cannot rotate ship here - blocked by another ship!");
+                return;
+              }
+
+              // 3. Update current ship placement variables
+              direction = newDirection;
+              row = newRow;
+              col = newCol;
+
+              // 4. Re-apply styles/transforms
+              this.positionShipInWrapper(
+                shipWrapper,
+                placedShip,
+                playerBoardSetup,
+                row,
+                col,
+                shipLength,
+                direction
+              );
+
+              // 5. Update board highlighting
+              const boxes = playerBoardSetup.querySelectorAll(".box");
+              for (const box of boxes) {
+                const bRow = Number(box.dataset.row);
+                const bCol = Number(box.dataset.col);
+                box.style.backgroundColor =
+                  gameBoard.board[bRow][bCol] !== null ? "transparent" : "";
+              }
+            });
+
+            placedShip.addEventListener("dragstart", (e) => {
+              e.dataTransfer.setData("ship", ship);
+              e.dataTransfer.setData("direction", direction);
+              this.oldShipRow = row;
+              this.oldShipCol = col;
+              this.oldShipDirection = direction;
+              this.draggedShip = ship;
+              this.draggedDirection = direction;
+              this.draggedShipElement = shipWrapper;
+              this.isRelocating = true;
+            });
+            playerBoardSetup.append(shipWrapper);
+          }
+        });
+
+        playerBoardSetup.append(playerBox);
+      }
+    }
+  }
+
+  async gameStart() {
+    playerOption.showModal();
+    const computerButton = document.querySelectorAll(".player-option button");
+    let value = null;
+    console.log(computerButton);
+    while (true) {
+      value = await new Promise((resolve, reject) => {
+        computerButton.forEach((button) => {
+          button.addEventListener(
+            "click",
+            () => {
+              resolve(button.value);
+            },
+            { once: true }
+          );
+        });
+      });
+      if (value === "computer") {
+        this.displayShips();
+        shipsContainer.style.display = "flex";
+        this.showPlayerBoard();
+        playerBoardSetup.style.display = "grid";
+        break;
+      }
+      if (value === "player2") {
+        alert("sorry this feature is not available yet, please wait for developer updates");
+        continue;
+      }
+      break;
+    }
+    playerOption.close();
+  }
+
   //resetting board
   resetBoard() {
     // 1. Reset state tracking properties
@@ -279,7 +545,7 @@ class Display {
     this.displayShips();
     this.generateComputerShips();
   }
-  showBoard() {
+  /* showBoard() {
     for (let row = 0; row < gameBoard.board.length; row++) {
       for (let col = 0; col < gameBoard.board[row].length; col++) {
         const playerBox = document.createElement("div");
@@ -508,7 +774,7 @@ class Display {
       }
     }
     this.generateComputerShips();
-  }
+  } */
 
   generateComputerShips() {
     const computerShips = computerBoard.querySelectorAll(".ship-placement");
