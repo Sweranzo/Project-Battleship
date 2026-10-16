@@ -49,7 +49,31 @@ class Display {
 
   //ships resizer
 
+  resizePlayerShips() {
+    requestAnimationFrame(() => {
+      const wrappers = playerBoardSetup.querySelectorAll(".ship-placement");
+
+      for (const wrapper of wrappers) {
+        const image = wrapper.querySelector("img");
+
+        this.positionShipInWrapper(
+          wrapper,
+          image,
+          playerBoardSetup,
+          Number(wrapper.dataset.row),
+          Number(wrapper.dataset.col),
+          Number(wrapper.dataset.length),
+          wrapper.dataset.direction
+        );
+      }
+    });
+  }
+
   positionShipInWrapper(wrapper, image, board, row, col, length, direction) {
+    wrapper.dataset.row = row;
+    wrapper.dataset.col = col;
+    wrapper.dataset.length = length;
+    wrapper.dataset.direction = direction;
     wrapper.style.position = "absolute";
     wrapper.style.inset = "0";
     wrapper.style.zIndex = "2";
@@ -459,9 +483,10 @@ class Display {
             playerBoardSetup.append(shipWrapper);
           }
         });
-
+        computerBoard.append(computerBox);
         playerBoardSetup.append(playerBox);
       }
+      this.generateComputerShips();
     }
   }
 
@@ -487,6 +512,7 @@ class Display {
         shipsContainer.style.display = "flex";
         this.showPlayerBoard();
         playerBoardSetup.style.display = "grid";
+        console.log(cBoard.board);
         playButton.textContent = "Start The Game !";
 
         break;
@@ -772,11 +798,11 @@ class Display {
           }
         });
 
-        computerBoard.append(computerBox);
+   
         playerBoard.append(playerBox);
       }
     }
-    this.generateComputerShips();
+ 
   } */
 
   generateComputerShips() {

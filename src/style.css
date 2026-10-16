@@ -66,6 +66,14 @@ body {
   transition: transform 3s ease-in 2s;
 }
 
+.player-board-setup.placed {
+  height: 100%;
+  width: 100%;
+  top: 0;
+  left: 0;
+  transform: none;
+}
+
 .player-board-setup img {
   z-index: 0;
   object-position: right;
@@ -306,11 +314,15 @@ main h1 {
 }
 
 .computer-board {
-  display: grid;
+  display: none;
   grid-template-columns: repeat(11, 1fr);
   grid-template-rows: repeat(11, 1fr);
   height: 100%;
   border: 2px solid red;
+}
+
+.computer-board.display {
+  display: grid;
 }
 .computer-ship {
   visibility: hidden;
