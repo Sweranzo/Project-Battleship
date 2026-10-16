@@ -17,6 +17,7 @@ import {
   progressBar,
   playerOption,
   playerBoardSetup,
+  startGame,
 } from "./dom.js";
 import battleshipImg from "./assets/ships-img/ShipBattleshipHull.png";
 import carrierImg from "./assets/ships-img/ShipCarrierHull.png";
@@ -486,6 +487,8 @@ class Display {
         shipsContainer.style.display = "flex";
         this.showPlayerBoard();
         playerBoardSetup.style.display = "grid";
+        playButton.textContent = "Start The Game !";
+
         break;
       }
       if (value === "player2") {

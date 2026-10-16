@@ -6,6 +6,12 @@ import { playButton, welcomeContainer, mainContainer, shipsContainer, midHero } 
 display.loadingScreen();
 
 playButton.addEventListener("click", async () => {
+  if (playButton.textContent === "Start The Game !") {
+    alert("game is starting");
+    display.generateComputerShips();
+    mainContainer.style.display = "grid";
+    return;
+  }
   display.gameStart();
   /*  midHero.classList.toggle("remove");
   await new Promise((resolve, reject) => {

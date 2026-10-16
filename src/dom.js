@@ -16,3 +16,5 @@ export const loadingOrbit = document.querySelector(".loading-orbit");
 export const progressBar = document.querySelector(".progress-bar");
 export const playerOption = document.querySelector(".player-option");
 export const playerBoardSetup = document.querySelector(".player-board-setup");
+export const startGame = document.querySelector(".start");
+
